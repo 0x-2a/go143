@@ -19,8 +19,8 @@ const (
 )
 
 var apiVersion = &APIVersion{"GO143", "v1", []string{
-	"/api/v1/tweets",
-	"/api/v1/randTweet",
+	"https://pure-ridge-19371.herokuapp.com/api/v1/tweets",
+	"https://pure-ridge-19371.herokuapp.com/api/v1/randTweet",
 }}
 
 type API struct {
@@ -59,8 +59,8 @@ func NewAPIRouter(httpRouter Router, tweetService TweetService) *API {
 	})
 
 	httpRouter.Route(APIRoot, func(r chi.Router) {
-		r.Get("/", a.GetTweets)
-		r.Post("/", a.PostTweet)
+		r.Get("/", a.GetRoot)
+		r.Post("/", a.GetRoot)
 	})
 
 	httpRouter.Route(TweetsURI, func(r chi.Router) {
