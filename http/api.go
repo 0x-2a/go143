@@ -60,11 +60,11 @@ func NewAPIRouter(httpRouter Router, tweetService TweetService) *API {
 
 	httpRouter.Route(APIRoot, func(r chi.Router) {
 		r.Get("/", a.GetRoot)
-		r.Post("/", a.GetRoot)
 	})
 
 	httpRouter.Route(TweetsURI, func(r chi.Router) {
 		r.Get("/", a.GetTweets)
+		r.Post("/", a.PostTweet)
 	})
 
 	httpRouter.Route(RandTweetURI, func(r chi.Router) {
