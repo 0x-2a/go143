@@ -4,6 +4,8 @@ import (
 	"flag"
 	"os"
 
+	"github.com/go-chi/chi"
+
 	"github.com/y3sh/go143/http"
 	"github.com/y3sh/go143/twitter"
 
@@ -18,13 +20,16 @@ var (
 
 func main() {
 	flag.Parse()
+
 	setupLogger(logLevelStr)
 
 	tweetService := twitter.NewTweetService()
 
-	apiRouter := http.NewAPIRouter(tweetService)
+	chiRouter := chi.NewRouter()
 
-	restAPIServer, err := http.NewServer(apiRouter, http.Port(*serverPort))
+	http.NewAPIRouter(chiRouter, tweetService)
+
+	restAPIServer, err := http.NewServer(http.Port(*serverPort))
 	if err != nil {
 		log.Fatalf("Failed to create api server. \n%+v\n", err)
 	}
