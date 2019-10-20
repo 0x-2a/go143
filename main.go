@@ -4,6 +4,8 @@ import (
 	"flag"
 	"os"
 
+	"github.com/y3sh/go143/instagram"
+
 	"github.com/go-chi/chi"
 
 	"github.com/y3sh/go143/http"
@@ -24,10 +26,11 @@ func main() {
 	setupLogger(logLevelStr)
 
 	tweetService := twitter.NewTweetService()
+	instagramUserService := instagram.NewUserService()
 
 	chiRouter := chi.NewRouter()
 
-	http.NewAPIRouter(chiRouter, tweetService)
+	http.NewAPIRouter(chiRouter, tweetService, instagramUserService)
 
 	restAPIServer, err := http.NewServer(http.Port(*serverPort))
 	if err != nil {

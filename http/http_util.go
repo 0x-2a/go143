@@ -9,11 +9,16 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type StatusCode int
-
 const (
 	InternalServerErrMessage = "Internal server error"
 )
+
+type StatusCode int
+
+type ErrorMessage struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+}
 
 func WriteBadRequest(w http.ResponseWriter, r *http.Request, userMessage string) {
 	log.WithFields(log.Fields{
@@ -22,7 +27,7 @@ func WriteBadRequest(w http.ResponseWriter, r *http.Request, userMessage string)
 		"httpCode": http.StatusBadRequest,
 	}).Warn(userMessage)
 
-	WriteError(w, userMessage, http.StatusBadRequest)
+	WriteError(w, r, userMessage, http.StatusBadRequest)
 }
 
 func WriteServerError(w http.ResponseWriter, r *http.Request, err error) {
@@ -32,11 +37,12 @@ func WriteServerError(w http.ResponseWriter, r *http.Request, err error) {
 		"httpCode": http.StatusInternalServerError,
 	}).Errorf("\n%+v\n", err)
 
-	WriteError(w, InternalServerErrMessage, http.StatusInternalServerError)
+	WriteError(w, r, InternalServerErrMessage, http.StatusInternalServerError)
 }
 
-func WriteError(w http.ResponseWriter, userMessage string, httpErrorCode StatusCode) {
-	http.Error(w, userMessage, int(httpErrorCode))
+func WriteError(w http.ResponseWriter, r *http.Request, userMessage string, httpErrorCode StatusCode) {
+	w.WriteHeader(int(httpErrorCode))
+	WriteJSON(w, r, &ErrorMessage{int(httpErrorCode), userMessage})
 }
 
 func WriteJSON(w http.ResponseWriter, r *http.Request, payload interface{}) {
