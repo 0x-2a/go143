@@ -157,6 +157,7 @@ func (a *API) PostTweet(w http.ResponseWriter, r *http.Request) {
 	tweetLen := len(tweet.TweetText)
 	if tweetLen < 1 || tweetLen > 280 {
 		WriteBadRequest(w, r, "Tweet length must be 1-280 chars.")
+		return
 	}
 
 	finalTweet, err := a.TweetService.AddTweet(tweet.TweetText)
