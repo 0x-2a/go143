@@ -4,12 +4,12 @@ import (
 	"flag"
 	"os"
 
+	"github.com/y3sh/go143/http"
 	"github.com/y3sh/go143/instagram"
+	"github.com/y3sh/go143/projects"
+	"github.com/y3sh/go143/twitter"
 
 	"github.com/go-chi/chi"
-
-	"github.com/y3sh/go143/http"
-	"github.com/y3sh/go143/twitter"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -27,10 +27,11 @@ func main() {
 
 	tweetService := twitter.NewTweetService()
 	instagramUserService := instagram.NewUserService()
+	projectService := projects.NewProjectStoreService()
 
 	chiRouter := chi.NewRouter()
 
-	http.NewAPIRouter(chiRouter, tweetService, instagramUserService)
+	http.NewAPIRouter(chiRouter, tweetService, instagramUserService, projectService)
 
 	restAPIServer, err := http.NewServer(http.Port(*serverPort))
 	if err != nil {

@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/y3sh/go143/instagram"
@@ -21,15 +22,17 @@ const (
 	RandTweetURI        = "/api/v1/randTweet"
 	InstagramUserURI    = "/api/v1/instagram/users"
 	InstagramSessionURI = "/api/v1/instagram/sessions"
+	ProjectStoreURI     = "/api/v1/projects/{groupName}/{keyName}"
 )
 
 var (
 	OK         = &struct{}{}
 	apiVersion = &APIVersion{"GO143", "v1", []string{
-		"https://pure-ridge-19371.herokuapp.com/api/v1/tweets",
-		"https://pure-ridge-19371.herokuapp.com/api/v1/randTweet",
-		"https://pure-ridge-19371.herokuapp.com/api/v1/instagram/user",
-		"https://pure-ridge-19371.herokuapp.com/api/v1/instagram/session",
+		"https://cos143xl.cse.taylor.edu:8080/api/v1/tweets",
+		"https://cos143xl.cse.taylor.edu:8080/api/v1/randTweet",
+		"https://cos143xl.cse.taylor.edu:8080/api/v1/instagram/user",
+		"https://cos143xl.cse.taylor.edu:8080/api/v1/instagram/session",
+		"https://cos143xl.cse.taylor.edu:8080/api/v1/projects/TheATeam/posts",
 	}}
 )
 
@@ -37,6 +40,7 @@ type API struct {
 	Router               Router
 	TweetService         TweetService
 	InstagramUserService InstagramUserService
+	ProjectStoreService  ProjectStoreService
 }
 
 type Router interface {
@@ -56,17 +60,24 @@ type InstagramUserService interface {
 	IsValidPassword(username instagram.Username, passwordAttempt string) bool
 }
 
+type ProjectStoreService interface {
+	GetValue(groupName, keyName string) string
+	SetValue(groupName, keyName, value string)
+}
+
 type APIVersion struct {
 	API     string   `json:"api"`
 	Version string   `json:"version"`
 	URLS    []string `json:"urls"`
 }
 
-func NewAPIRouter(httpRouter Router, tweetService TweetService, instagramUserService InstagramUserService) *API {
+func NewAPIRouter(httpRouter Router, tweetService TweetService, instagramUserService InstagramUserService,
+	projectStoreService ProjectStoreService) *API {
 	a := &API{
 		Router:               httpRouter,
 		TweetService:         tweetService,
 		InstagramUserService: instagramUserService,
+		ProjectStoreService:  projectStoreService,
 	}
 
 	a.EnableCORS()
@@ -94,6 +105,11 @@ func NewAPIRouter(httpRouter Router, tweetService TweetService, instagramUserSer
 
 	httpRouter.Route(InstagramSessionURI, func(r chi.Router) {
 		r.Post("/", a.PostInstagramSession)
+	})
+
+	httpRouter.Route(ProjectStoreURI, func(r chi.Router) {
+		r.Get("/", a.GetProjectKeyValue)
+		r.Post("/", a.SetProjectKeyValue)
 	})
 
 	http.Handle(SiteRoot, httpRouter)
@@ -177,6 +193,45 @@ func (a *API) GetRandTweet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	WriteJSON(w, r, randTweet)
+}
+
+func (a *API) GetProjectKeyValue(w http.ResponseWriter, r *http.Request) {
+	groupName := chi.URLParam(r, "groupName")
+	keyName := chi.URLParam(r, "keyName")
+
+	val := a.ProjectStoreService.GetValue(groupName, keyName)
+
+	w.Header().Set("content-type", "application/json")
+
+	if val == "" {
+		WriteError(w, r, "No data found, try a post first.", http.StatusBadRequest)
+		return
+	}
+
+	WriteResponse(w, r, []byte(val))
+}
+
+func (a *API) SetProjectKeyValue(w http.ResponseWriter, r *http.Request) {
+	bodyBytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		WriteBadRequest(w, r, "Error invalid request body.")
+		return
+	}
+
+	var ignored interface{}
+
+	err = json.Unmarshal(bodyBytes, &ignored)
+	if err != nil {
+		WriteBadRequest(w, r, "Error invalid JSON.")
+		return
+	}
+
+	groupName := chi.URLParam(r, "groupName")
+	keyName := chi.URLParam(r, "keyName")
+
+	a.ProjectStoreService.SetValue(groupName, keyName, string(bodyBytes))
+
+	WriteJSON(w, r, OK)
 }
 
 func (a *API) EnableCORS() {
