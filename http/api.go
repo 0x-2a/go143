@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/go-chi/chi"
@@ -154,9 +155,14 @@ func GetPostEcho(w http.ResponseWriter, r *http.Request, method string) {
 		leftRight := strings.Split(keyVal, "=")
 
 		if len(leftRight) >= 2 {
-			res += fmt.Sprintf("<li>%s: %s</li>", leftRight[0], leftRight[1])
+			a, _ := url.QueryUnescape(leftRight[0])
+			b, _ := url.QueryUnescape(leftRight[1])
+
+			res += fmt.Sprintf("<li>%s: %s</li>", a, b)
 		} else if len(leftRight) == 1 {
-			res += fmt.Sprintf("<li>%s: </li>", leftRight[0])
+			a, _ := url.QueryUnescape(leftRight[0])
+
+			res += fmt.Sprintf("<li>%s: </li>", a)
 		}
 	}
 
