@@ -16,7 +16,7 @@ ENV GO111MODULE="on"
 
 # ldflags -w -s omits the symbol table, debug information and the DWARF table
 RUN go get -u ./...
-RUN GOOS=linux GOOARCH=amd64 CGO_ENABLED=0 go build -mod vendor -ldflags="-w -s" \
+RUN GOOS=linux GOOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-w -s" -mod vendor \
  	-o bin/go143 ./main.go
 
 # Use a small image for runtime
