@@ -4,14 +4,12 @@ import (
 	"flag"
 	"os"
 
+	"github.com/go-chi/chi"
+	log "github.com/sirupsen/logrus"
 	"github.com/y3sh/go143/http"
 	"github.com/y3sh/go143/instagram"
 	"github.com/y3sh/go143/projects"
 	"github.com/y3sh/go143/twitter"
-
-	"github.com/go-chi/chi"
-
-	log "github.com/sirupsen/logrus"
 )
 
 var (

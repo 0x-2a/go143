@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
@@ -17,6 +18,7 @@ const (
 	SiteRoot            = "/"
 	APIRoot             = "/api"
 	TweetsURI           = "/api/v1/tweets"
+	EchoURI             = "/api/v1/form"
 	RandTweetURI        = "/api/v1/randTweet"
 	InstagramUserURI    = "/api/v1/instagram/users"
 	InstagramSessionURI = "/api/v1/instagram/sessions"
@@ -27,6 +29,7 @@ var (
 	OK         = &struct{}{}
 	apiVersion = &APIVersion{"GO143", "v1", []string{
 		"https://cos143xl.cse.taylor.edu:8080/api/v1/tweets",
+		"https://cos143xl.cse.taylor.edu:8080/api/v1/form",
 		"https://cos143xl.cse.taylor.edu:8080/api/v1/randTweet",
 		"https://cos143xl.cse.taylor.edu:8080/api/v1/instagram/user",
 		"https://cos143xl.cse.taylor.edu:8080/api/v1/instagram/session",
@@ -93,6 +96,28 @@ func NewAPIRouter(httpRouter Router, tweetService TweetService, instagramUserSer
 		r.Post("/", a.PostTweet)
 	})
 
+	httpRouter.Route(EchoURI, func(r chi.Router) {
+		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			GetPostEcho(w, r, "get")
+		})
+
+		r.Post("/", func(w http.ResponseWriter, r *http.Request) {
+			GetPostEcho(w, r, "post")
+		})
+
+		r.Put("/", func(w http.ResponseWriter, r *http.Request) {
+			GetPostEcho(w, r, "put")
+		})
+
+		r.Patch("/", func(w http.ResponseWriter, r *http.Request) {
+			GetPostEcho(w, r, "patch")
+		})
+
+		r.Delete("/", func(w http.ResponseWriter, r *http.Request) {
+			GetPostEcho(w, r, "delete")
+		})
+	})
+
 	httpRouter.Route(RandTweetURI, func(r chi.Router) {
 		r.Get("/", a.GetRandTweet)
 	})
@@ -113,6 +138,34 @@ func NewAPIRouter(httpRouter Router, tweetService TweetService, instagramUserSer
 	http.Handle(SiteRoot, httpRouter)
 
 	return a
+}
+
+func GetPostEcho(w http.ResponseWriter, r *http.Request, method string) {
+	var q, res string
+	if method == "get" {
+		q = r.URL.RawQuery
+	} else {
+		b, _ := ioutil.ReadAll(r.Body)
+		q = string(b)
+	}
+
+	keyVals := strings.Split(q, "&")
+	for _, keyVal := range keyVals {
+		leftRight := strings.Split(keyVal, "=")
+
+		if len(leftRight) >= 2 {
+			res += fmt.Sprintf("<li>%s: %s</li>", leftRight[0], leftRight[1])
+		} else if len(leftRight) == 1 {
+			res += fmt.Sprintf("<li>%s: </li>", leftRight[0])
+		}
+	}
+
+	res = fmt.Sprintf("<ul>%s</ul>", res)
+
+	echoPage := fmt.Sprintf("<!DOCTYPE html><html><body><button class=\"btn\" onclick=\"goBack()\">&larr; Back</button><script>function goBack(){window.history.back();}</script><p>Request Method: %s</p> %s <style>html{width: 100%%; height: 100%%; overflow: hidden;}.btn{padding-left: 1rem; padding-right: 1.3rem; padding-top: .3rem; padding-bottom: .3rem;}body{width: 100%%; height: 100%%; padding-top: 2rem; font-family: 'Helvetica Neue', Arial sans-serif; background: #092756; background: -moz-radial-gradient(0%% 100%%, ellipse cover, rgba(104, 128, 138, .4) 10%%, rgba(138, 114, 76, 0) 40%%), -moz-linear-gradient(top, rgba(57, 173, 219, .25) 0%%, rgba(42, 60, 87, .4) 100%%), -moz-linear-gradient(-45deg, #670d10 0%%, #092756 100%%); background: -webkit-radial-gradient(0%% 100%%, ellipse cover, rgba(104, 128, 138, .4) 10%%, rgba(138, 114, 76, 0) 40%%), -webkit-linear-gradient(top, rgba(57, 173, 219, .25) 0%%, rgba(42, 60, 87, .4) 100%%), -webkit-linear-gradient(-45deg, #670d10 0%%, #092756 100%%); background: -o-radial-gradient(0%% 100%%, ellipse cover, rgba(104, 128, 138, .4) 10%%, rgba(138, 114, 76, 0) 40%%), -o-linear-gradient(top, rgba(57, 173, 219, .25) 0%%, rgba(42, 60, 87, .4) 100%%), -o-linear-gradient(-45deg, #670d10 0%%, #092756 100%%); background: -ms-radial-gradient(0%% 100%%, ellipse cover, rgba(104, 128, 138, .4) 10%%, rgba(138, 114, 76, 0) 40%%), -ms-linear-gradient(top, rgba(57, 173, 219, .25) 0%%, rgba(42, 60, 87, .4) 100%%), -ms-linear-gradient(-45deg, #670d10 0%%, #092756 100%%); background: -webkit-radial-gradient(0%% 100%%, ellipse cover, rgba(104, 128, 138, .4) 10%%, rgba(138, 114, 76, 0) 40%%), linear-gradient(to bottom, rgba(57, 173, 219, .25) 0%%, rgba(42, 60, 87, .4) 100%%), linear-gradient(135deg, #670d10 0%%, #092756 100%%); filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#3E1D6D', endColorstr='#092756', GradientType=1);}body{margin-left: 2rem;}li, h4, p{color: #fff; list-style: none; font-size: 1.5rem;}</style></body></html>", method, res)
+
+	WriteResponse(w, r, []byte(echoPage))
+
 }
 
 func (a *API) PostInstagramUser(w http.ResponseWriter, r *http.Request) {
