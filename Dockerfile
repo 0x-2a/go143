@@ -1,4 +1,4 @@
-FROM golang:1.13.1-alpine3.10@sha256:2293e952c79b8b3a987e1e09d48b6aa403d703cef9a8fa316d30ba2918d37367 as builder
+FROM golang:1.15.0-alpine3.12@sha256:73182a0a24a1534e31ad9cc9e3a4bb46bb030a883b26eda0a87060f679b83607 as builder
 
 RUN apk update && apk upgrade && apk add --no-cache \
  ca-certificates \

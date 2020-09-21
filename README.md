@@ -42,6 +42,11 @@ docker run --rm -ti -p 8080:8080 go143:1.0.0 --port=8080 --logLevel=trace
 docker stop go143:1.0.0
 ```
 
+## Running PROD via Docker
+
+```sh
+sudo docker run -d --restart on-failure -p 3000:8080 go143:1.0.0 --port=8080 --logLevel=info
+```
 
 ## Linting
 

@@ -6,13 +6,11 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/y3sh/go143/instagram"
-
-	"github.com/go-chi/cors"
-	"github.com/y3sh/go143/twitter"
-
 	"github.com/go-chi/chi"
+	"github.com/go-chi/cors"
 	"github.com/juju/errors"
+	"github.com/y3sh/go143/instagram"
+	"github.com/y3sh/go143/twitter"
 )
 
 const (
