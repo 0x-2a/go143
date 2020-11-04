@@ -13,7 +13,7 @@ type RedisRepository struct {
 }
 
 const (
-	redisAddr = "127.0.0.1"
+	redisAddr = "0.0.0.0"
 	redisPort = 6379
 )
 

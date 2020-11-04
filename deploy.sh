@@ -10,8 +10,14 @@ docker stop imageID
 
 git pull
 docker build --no-cache -f Dockerfile -t go143:1.0.0 .
-docker run -d --restart on-failure -p 3000:8080 -e REDIS_PASSWORD="AWWxdpdeprBdppVfJmnKY" go143:1.0.0 --port=8080 --logLevel=info
 
+# network host to allow go to connect to localhost redis
+# port 3000 gets proxied to 8080 internally for https
+docker run -d -p 3000:3000 \
+--restart on-failure \
+--network="host" \
+-e REDIS_PASSWORD="REDIS_PASSWORD_HERE" \
+go143:1.0.0 --port=3000 --logLevel=info
 
 # Running Redis
 sudo docker run \
@@ -23,6 +29,4 @@ sudo docker run \
 
 
 # SSH bastion
-ssh -N -L 3307:jhibschm@matthew.cse.taylor.edu:22 joshh@10.90.16.15 -p 2227
-
-ssh -L 6000:cos143xl.cse.taylor.edu:22 jhibschm@matthew.cse.taylor.edu
+ssh -L 6000:cos143xl.cse.taylor.edu:22 user@john.cse.taylor.edu
