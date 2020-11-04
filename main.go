@@ -29,7 +29,7 @@ func main() {
 	redisRepository := repository.NewRedisRepository()
 	err := redisRepository.Connect(redisPassword)
 	if err != nil {
-		log.Fatalf("Failed to connect to redis. \n%+v\n")
+		log.Fatalf("Failed to connect to redis. \n%+v\n", err)
 	}
 
 	tweetService := twitter.NewTweetService()
