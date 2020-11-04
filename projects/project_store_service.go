@@ -2,7 +2,8 @@ package projects
 
 import (
 	"fmt"
-	"sync"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type User struct {
@@ -14,33 +15,38 @@ type User struct {
 
 type Username string
 
+type keyValRepository interface {
+	SetKeyValue(key, value string) error
+	GetValue(key string) (string, error)
+}
+
 type ProjectStoreService struct {
-	storeMutex   *sync.Mutex
-	ProjectStore map[string]string
+	keyValRepo keyValRepository
 }
 
-func NewProjectStoreService() *ProjectStoreService {
+func NewProjectStoreService(keyValRepo keyValRepository) *ProjectStoreService {
 	return &ProjectStoreService{
-		ProjectStore: make(map[string]string),
-		storeMutex:   &sync.Mutex{},
+		keyValRepo: keyValRepo,
 	}
 }
 
-func (u *ProjectStoreService) GetValue(groupName, keyName string) string {
-	u.storeMutex.Lock()
-	defer u.storeMutex.Unlock()
+func (p *ProjectStoreService) GetValue(groupName, keyName string) string {
+	key := fmt.Sprintf("%s:%s", groupName, keyName)
 
-	val, ok := u.ProjectStore[fmt.Sprintf("%s:%s", groupName, keyName)]
-	if ok {
-		return val
+	value, err := p.keyValRepo.GetValue(key)
+	if err != nil {
+		log.Errorf("Could not fetch key: %s\n%+v\n", key, err)
 	}
 
-	return ""
+	return value
 }
 
-func (u *ProjectStoreService) SetValue(groupName, keyName, value string) {
-	u.storeMutex.Lock()
-	defer u.storeMutex.Unlock()
+func (p *ProjectStoreService) SetValue(groupName, keyName, value string) {
 
-	u.ProjectStore[fmt.Sprintf("%s:%s", groupName, keyName)] = value
+	key := fmt.Sprintf("%s:%s", groupName, keyName)
+
+	err := p.keyValRepo.SetKeyValue(key, value)
+	if err != nil {
+		log.Errorf("Could not set key value: %s:%s\n%+v\n", key, value, err)
+	}
 }

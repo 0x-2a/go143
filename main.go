@@ -9,6 +9,7 @@ import (
 	"github.com/y3sh/go143/http"
 	"github.com/y3sh/go143/instagram"
 	"github.com/y3sh/go143/projects"
+	"github.com/y3sh/go143/repository"
 	"github.com/y3sh/go143/twitter"
 )
 
@@ -23,9 +24,17 @@ func main() {
 
 	setupLogger(logLevelStr)
 
+	redisPassword := os.Getenv("REDIS_PASSWORD")
+
+	redisRepository := repository.NewRedisRepository()
+	err := redisRepository.Connect(redisPassword)
+	if err != nil {
+		log.Fatalf("Failed to connect to redis. \n%+v\n")
+	}
+
 	tweetService := twitter.NewTweetService()
 	instagramUserService := instagram.NewUserService()
-	projectService := projects.NewProjectStoreService()
+	projectService := projects.NewProjectStoreService(redisRepository)
 
 	chiRouter := chi.NewRouter()
 

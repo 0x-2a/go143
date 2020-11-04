@@ -32,12 +32,22 @@ Flags include `port` and `logLevel` (panic, fatal, error, warn, info, debug, tra
 
 Test the API at [http://localhost:3000/](http://localhost:3000/)
 
+## Start a Redis Instance
+
+docker run \
+-p 6379:6379 \
+-v redisData:/data \
+--name redis \
+--restart on-failure \
+-d redis:6.0.9-alpine redis-server --appendonly yes  --requirepass "REDIS_PASSWORD_HERE"
+
+
 ## Running via Docker
 
 ```sh
 docker build -f Dockerfile -t go143:1.0.0 .
 
-docker run --rm -ti -p 8080:8080 go143:1.0.0 --port=8080 --logLevel=trace
+docker run --rm -ti -p 8080:8080 -e REDIS_PASSWORD="REDIS_PASSWORD_HERE" go143:1.0.0 --port=8080 --logLevel=trace
 
 docker stop go143:1.0.0
 ```
