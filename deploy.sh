@@ -17,6 +17,8 @@ docker run -d -p 3000:3000 \
 --restart on-failure \
 --network="host" \
 -e REDIS_PASSWORD="REDIS_PASSWORD_HERE" \
+-e S3_ACCESS_KEY="S3_ACCESS_KEY" \
+-e S3_SECRET_KEY="S3_SECRET_KEY" \
 go143:1.0.0 --port=3000 --logLevel=info
 
 # Running Redis
