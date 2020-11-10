@@ -1,16 +1,22 @@
 package http
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 
+	"github.com/y3sh/go143/repository"
+
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
+	"github.com/google/uuid"
 	"github.com/juju/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/y3sh/go143/instagram"
 	"github.com/y3sh/go143/twitter"
 )
@@ -23,6 +29,7 @@ const (
 	RandTweetURI        = "/api/v1/randTweet"
 	InstagramUserURI    = "/api/v1/instagram/users"
 	InstagramSessionURI = "/api/v1/instagram/sessions"
+	FileUploadURI       = "/api/v1/files"
 	ProjectStoreURI     = "/api/v1/projects/{groupName}/{keyName}"
 )
 
@@ -35,6 +42,7 @@ var (
 		"https://cos143xl.cse.taylor.edu:8080/api/v1/instagram/user",
 		"https://cos143xl.cse.taylor.edu:8080/api/v1/instagram/session",
 		"https://cos143xl.cse.taylor.edu:8080/api/v1/projects/TheATeam/posts",
+		"https://cos143xl.cse.taylor.edu:8080/api/v1/files",
 	}}
 )
 
@@ -43,6 +51,7 @@ type API struct {
 	TweetService         TweetService
 	InstagramUserService InstagramUserService
 	ProjectStoreService  ProjectStoreService
+	S3Repository         S3Repository
 }
 
 type Router interface {
@@ -67,19 +76,23 @@ type ProjectStoreService interface {
 	SetValue(groupName, keyName, value string)
 }
 
+type S3Repository interface {
+	AddFileToS3(name string, reader *bytes.Reader) (string, error)
+}
+
 type APIVersion struct {
 	API     string   `json:"api"`
 	Version string   `json:"version"`
 	URLS    []string `json:"urls"`
 }
 
-func NewAPIRouter(httpRouter Router, tweetService TweetService, instagramUserService InstagramUserService,
-	projectStoreService ProjectStoreService) *API {
+func NewAPIRouter(httpRouter Router, tweetService TweetService, instagramUserService InstagramUserService, projectStoreService ProjectStoreService, s3Repository S3Repository) *API {
 	a := &API{
 		Router:               httpRouter,
 		TweetService:         tweetService,
 		InstagramUserService: instagramUserService,
 		ProjectStoreService:  projectStoreService,
+		S3Repository:         s3Repository,
 	}
 
 	a.EnableCORS()
@@ -134,6 +147,10 @@ func NewAPIRouter(httpRouter Router, tweetService TweetService, instagramUserSer
 	httpRouter.Route(ProjectStoreURI, func(r chi.Router) {
 		r.Get("/", a.GetProjectKeyValue)
 		r.Post("/", a.SetProjectKeyValue)
+	})
+
+	httpRouter.Route(FileUploadURI, func(r chi.Router) {
+		r.Post("/", a.PostFileUpload)
 	})
 
 	http.Handle(SiteRoot, httpRouter)
@@ -289,6 +306,44 @@ func (a *API) SetProjectKeyValue(w http.ResponseWriter, r *http.Request) {
 	a.ProjectStoreService.SetValue(groupName, keyName, string(bodyBytes))
 
 	WriteJSON(w, r, OK)
+}
+
+func (a *API) PostFileUpload(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseMultipartForm(256 * 1000) // bytes
+
+	var buf bytes.Buffer
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		log.Errorf("Could not read file \n%+v\n", err)
+
+		WriteBadRequest(w, r, "Could not read file.")
+		return
+	}
+
+	nameParts := strings.Split(header.Filename, ".")
+	name := uuid.New().String()
+
+	if len(nameParts) > 1 {
+		name = fmt.Sprintf("%s.%s", name, nameParts[len(nameParts)-1])
+	}
+
+	// Copy the file data to my buffer
+	_, err = io.Copy(&buf, file)
+	if err != nil {
+		WriteError(w, r, "Err buffering file", 500)
+		return
+	}
+
+	fileURL, err := a.S3Repository.AddFileToS3(name, bytes.NewReader(buf.Bytes()))
+	if err != nil {
+		log.Errorf("%+v", err)
+		WriteError(w, r, "Err uploading to S3", 500)
+		return
+	}
+
+	WriteJSON(w, r, repository.S3Response{
+		FileURL: fileURL,
+	})
 }
 
 func (a *API) EnableCORS() {

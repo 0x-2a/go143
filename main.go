@@ -25,9 +25,21 @@ func main() {
 	setupLogger(logLevelStr)
 
 	redisPassword := os.Getenv("REDIS_PASSWORD")
+	s3AccessKey := os.Getenv("S3_ACCESS_KEY")
+	s3SecretKey := os.Getenv("S3_SECRET_KEY")
 
 	redisRepository := repository.NewRedisRepository()
 	err := redisRepository.Connect(redisPassword)
+	if err != nil {
+		log.Fatalf("Failed to connect to redis. \n%+v\n", err)
+	}
+
+	s3Repository, err := repository.NewS3Repository(s3AccessKey, s3SecretKey)
+	if err != nil {
+		log.Fatalf("Failed to connect to s3. \n%+v\n", err)
+	}
+
+	err = redisRepository.Connect(redisPassword)
 	if err != nil {
 		log.Fatalf("Failed to connect to redis. \n%+v\n", err)
 	}
@@ -38,7 +50,7 @@ func main() {
 
 	chiRouter := chi.NewRouter()
 
-	http.NewAPIRouter(chiRouter, tweetService, instagramUserService, projectService)
+	http.NewAPIRouter(chiRouter, tweetService, instagramUserService, projectService, s3Repository)
 
 	restAPIServer, err := http.NewServer(http.Port(*serverPort))
 	if err != nil {
