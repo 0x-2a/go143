@@ -150,7 +150,7 @@ func (u *UserService) IsValidPassword(username Username, passwordAttempt string)
 func (u *UserService) GetRandProfile() RandomUser {
 	user := randUsers[rand.Intn(len(randUsers))]
 
-	p := rand.Perm(len(feedImages))
+	p := rand.Perm(9)
 
 	for _, r := range p {
 		user.FeedImages = append(user.FeedImages, feedImages[r])
