@@ -10,27 +10,27 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/y3sh/go143/repository"
-
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
 	"github.com/google/uuid"
 	"github.com/juju/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/y3sh/go143/instagram"
+	"github.com/y3sh/go143/repository"
 	"github.com/y3sh/go143/twitter"
 )
 
 const (
-	SiteRoot            = "/"
-	APIRoot             = "/api"
-	TweetsURI           = "/api/v1/tweets"
-	EchoURI             = "/api/v1/form"
-	RandTweetURI        = "/api/v1/randTweet"
-	InstagramUserURI    = "/api/v1/instagram/users"
-	InstagramSessionURI = "/api/v1/instagram/sessions"
-	FileUploadURI       = "/api/v1/files"
-	ProjectStoreURI     = "/api/v1/projects/{groupName}/{keyName}"
+	SiteRoot             = "/"
+	APIRoot              = "/api"
+	TweetsURI            = "/api/v1/tweets"
+	EchoURI              = "/api/v1/form"
+	RandTweetURI         = "/api/v1/randTweet"
+	InstagramUserURI     = "/api/v1/instagram/users"
+	InstagramRandUserURI = "/api/v1/instagram/users/random"
+	InstagramSessionURI  = "/api/v1/instagram/sessions"
+	FileUploadURI        = "/api/v1/files"
+	ProjectStoreURI      = "/api/v1/projects/{groupName}/{keyName}"
 )
 
 var (
@@ -40,6 +40,7 @@ var (
 		"https://cos143xl.cse.taylor.edu:8080/api/v1/form",
 		"https://cos143xl.cse.taylor.edu:8080/api/v1/randTweet",
 		"https://cos143xl.cse.taylor.edu:8080/api/v1/instagram/user",
+		"https://cos143xl.cse.taylor.edu:8080/api/v1/instagram/users/random",
 		"https://cos143xl.cse.taylor.edu:8080/api/v1/instagram/session",
 		"https://cos143xl.cse.taylor.edu:8080/api/v1/projects/TheATeam/posts",
 		"https://cos143xl.cse.taylor.edu:8080/api/v1/files",
@@ -68,6 +69,7 @@ type TweetService interface {
 
 type InstagramUserService interface {
 	AddUser(user instagram.User) error
+	GetRandProfile() instagram.RandomUser
 	IsValidPassword(username instagram.Username, passwordAttempt string) bool
 }
 
@@ -138,6 +140,10 @@ func NewAPIRouter(httpRouter Router, tweetService TweetService, instagramUserSer
 
 	httpRouter.Route(InstagramUserURI, func(r chi.Router) {
 		r.Post("/", a.PostInstagramUser)
+	})
+
+	httpRouter.Route(InstagramRandUserURI, func(r chi.Router) {
+		r.Get("/", a.GetRandInstagramUser)
 	})
 
 	httpRouter.Route(InstagramSessionURI, func(r chi.Router) {
@@ -356,4 +362,8 @@ func (a *API) EnableCORS() {
 	})
 
 	a.Router.Use(corsConfig.Handler)
+}
+
+func (a *API) GetRandInstagramUser(w http.ResponseWriter, r *http.Request) {
+	WriteJSON(w, r, a.InstagramUserService.GetRandProfile())
 }

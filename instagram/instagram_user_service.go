@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
+	"math/rand"
 	"strings"
 	"sync"
 )
@@ -16,9 +17,10 @@ type User struct {
 }
 
 type RandomUser struct {
-	Name     string `json:"name"`
-	Location string `json:"location"`
-	Picture  string `json:"picture"`
+	Name       string   `json:"name"`
+	Location   string   `json:"location"`
+	Picture    string   `json:"picture"`
+	FeedImages []string `json:"feedImages"`
 }
 
 type Username string
@@ -33,50 +35,38 @@ var (
 		{
 			Name:     "Miss Addison Young",
 			Location: "6682 Brock Rd, Fountainbleu, Nunavut, Canada, S8P 4T7",
-			Picture:  "https://randomuser.me/api/portraits/women/3.jpg",
+			Picture:  "https://cos143.s3.us-east-2.amazonaws.com/user1.jpg",
 		},
 		{
-			Name:     "Miss Addison Young",
-			Location: "6682 Brock Rd, Fountainbleu, Nunavut, Canada, S8P 4T7",
-			Picture:  "https://randomuser.me/api/portraits/women/3.jpg",
+			Name:     "Miss Alice Spencer",
+			Location: "922 Frostfield Dr, New York, NY, USA",
+			Picture:  "https://cos143.s3.us-east-2.amazonaws.com/user2.jpg",
 		},
 		{
-			Name:     "Miss Addison Young",
-			Location: "6682 Brock Rd, Fountainbleu, Nunavut, Canada, S8P 4T7",
-			Picture:  "https://randomuser.me/api/portraits/women/3.jpg",
+			Name:     "Miss Vallery Kirkbride",
+			Location: "8472 Connifer Ridge Rd, Mountain View, CA",
+			Picture:  "https://cos143.s3.us-east-2.amazonaws.com/user3.jpg",
 		},
 		{
-			Name:     "Miss Addison Young",
-			Location: "6682 Brock Rd, Fountainbleu, Nunavut, Canada, S8P 4T7",
-			Picture:  "https://randomuser.me/api/portraits/women/3.jpg",
+			Name:     "Mr Jordan Montoya",
+			Location: "369 Roam Terrace, Atlanta, GA, USA",
+			Picture:  "https://cos143.s3.us-east-2.amazonaws.com/user4.jpg",
 		},
 		{
-			Name:     "Miss Addison Young",
-			Location: "6682 Brock Rd, Fountainbleu, Nunavut, Canada, S8P 4T7",
-			Picture:  "https://randomuser.me/api/portraits/women/3.jpg",
+			Name:     "Mr Lucas Bryant",
+			Location: "6395 Wheathill Pass, Boulder, CO, USA",
+			Picture:  "https://cos143.s3.us-east-2.amazonaws.com/user5.jpg",
 		},
 		{
-			Name:     "Miss Addison Young",
-			Location: "6682 Brock Rd, Fountainbleu, Nunavut, Canada, S8P 4T7",
-			Picture:  "https://randomuser.me/api/portraits/women/3.jpg",
+			Name:     "Mr Frank Anderson",
+			Location: "455 Benton Blvd, San Francisco, CA, USA",
+			Picture:  "https://cos143.s3.us-east-2.amazonaws.com/user6.jpg",
 		},
 		{
-			Name:     "Miss Addison Young",
-			Location: "6682 Brock Rd, Fountainbleu, Nunavut, Canada, S8P 4T7",
-			Picture:  "https://randomuser.me/api/portraits/women/3.jpg",
+			Name:     "Mr Bernard Abernathy",
+			Location: "221B Easy St, Mountain View, CA, USA",
+			Picture:  "https://cos143.s3.us-east-2.amazonaws.com/user7.jpg",
 		},
-	}
-
-	// 3 girls, 4 boys
-
-	userImages = []string{
-		"https://cos143.s3.us-east-2.amazonaws.com/user1.jpg",
-		"https://cos143.s3.us-east-2.amazonaws.com/user2.jpg",
-		"https://cos143.s3.us-east-2.amazonaws.com/user3.jpg",
-		"https://cos143.s3.us-east-2.amazonaws.com/user4.jpg",
-		"https://cos143.s3.us-east-2.amazonaws.com/user5.jpg",
-		"https://cos143.s3.us-east-2.amazonaws.com/user6.jpg",
-		"https://cos143.s3.us-east-2.amazonaws.com/user7.jpg",
 	}
 
 	feedImages = []string{
@@ -157,6 +147,14 @@ func (u *UserService) IsValidPassword(username Username, passwordAttempt string)
 	return false
 }
 
-func (u *UserService) GetRandProfile() {
+func (u *UserService) GetRandProfile() RandomUser {
+	user := randUsers[rand.Intn(len(randUsers))]
 
+	p := rand.Perm(len(feedImages))
+
+	for _, r := range p {
+		user.FeedImages = append(user.FeedImages, feedImages[r])
+	}
+
+	return user
 }
