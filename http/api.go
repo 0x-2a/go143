@@ -284,7 +284,7 @@ func (a *API) GetProjectKeyValue(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
 
 	if val == "" {
-		WriteError(w, r, "No data found, try a post first.", http.StatusBadRequest)
+		WriteResponse(w, r, []byte("null"))
 		return
 	}
 
