@@ -37,7 +37,7 @@ const (
 
 var (
 	OK         = &struct{}{}
-	apiVersion = &APIVersion{"GO143", "v1", []string{
+	apiVersion = &APIVersion{"GO143", "v1.2", []string{
 		"https://api.y3sh.com/api/v1/tweets",
 		"https://api.y3sh.com/api/v1/form",
 		"https://api.y3sh.com/api/v1/randTweet",
