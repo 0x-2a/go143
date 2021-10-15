@@ -140,14 +140,16 @@ func (r *RestClient) GetSimpleBestSellers() []SimpleBook {
 }
 
 func (r *RestClient) GetBookCoverURL(isbn string) BookCoverURL {
-	storedURLIf,_ := r.isbnCoverURLMap.Load(isbn)
+	storedURLIf, _ := r.isbnCoverURLMap.Load(isbn)
 	if storedURL, ok := storedURLIf.(string); ok {
 		if storedURL != "" {
 			return BookCoverURL{URL: storedURL}
 		}
 	}
 
-	defaultURL := BookCoverURL{}
+	defaultURL := BookCoverURL{
+		URL: "https://cos143.y3sh.com/bookPlaceholder.png",
+	}
 	url := fmt.Sprintf("https://www.googleapis.com/books/v1/volumes?q=isbn:%s&key=%s", isbn, r.googleBookAPIKey)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -189,6 +191,8 @@ func (r *RestClient) GetBookCoverURL(isbn string) BookCoverURL {
 			return BookCoverURL{URL: thumbnail}
 		}
 	}
+
+	r.isbnCoverURLMap.Store(isbn, defaultURL)
 
 	return defaultURL
 }
