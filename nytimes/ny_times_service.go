@@ -190,7 +190,7 @@ func (r *RestClient) GetBookCoverURL(isbn string) BookCoverURL {
 
 	r.isbnCoverURLMap.Store(isbn, thumbnail)
 
-	return defaultURL
+	return BookCoverURL{URL: thumbnail}
 }
 
 func (r *RestClient) getBestSellers() BestSellerRes {
