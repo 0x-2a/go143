@@ -186,13 +186,9 @@ func (r *RestClient) GetBookCoverURL(isbn string) BookCoverURL {
 	thumbnail := defaultURL.URL
 	if len(items) > 0 {
 		thumbnail = items[0].VolumeInfo.ImageLinks.Thumbnail
-		if thumbnail != "" {
-			r.isbnCoverURLMap.Store(isbn, thumbnail)
-			return BookCoverURL{URL: thumbnail}
-		}
 	}
 
-	r.isbnCoverURLMap.Store(isbn, defaultURL)
+	r.isbnCoverURLMap.Store(isbn, thumbnail)
 
 	return defaultURL
 }
