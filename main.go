@@ -8,6 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/y3sh/go143/http"
 	"github.com/y3sh/go143/instagram"
+	"github.com/y3sh/go143/nytimes"
 	"github.com/y3sh/go143/projects"
 	"github.com/y3sh/go143/repository"
 	"github.com/y3sh/go143/twitter"
@@ -27,6 +28,7 @@ func main() {
 	redisPassword := os.Getenv("REDIS_PASSWORD")
 	s3AccessKey := os.Getenv("S3_ACCESS_KEY")
 	s3SecretKey := os.Getenv("S3_SECRET_KEY")
+	nyTimesAPIKey := os.Getenv("NY_TIMES_API_KEY")
 
 	redisRepository := repository.NewRedisRepository()
 	err := redisRepository.Connect(redisPassword)
@@ -46,11 +48,13 @@ func main() {
 
 	tweetService := twitter.NewTweetService()
 	instagramUserService := instagram.NewUserService()
+	nyTimesClient := nytimes.NewRestClient(nyTimesAPIKey)
 	projectService := projects.NewProjectStoreService(redisRepository)
 
 	chiRouter := chi.NewRouter()
 
-	http.NewAPIRouter(chiRouter, tweetService, instagramUserService, projectService, s3Repository)
+	http.NewAPIRouter(chiRouter, tweetService, instagramUserService,
+		nyTimesClient, projectService, s3Repository)
 
 	restAPIServer, err := http.NewServer(http.Port(*serverPort))
 	if err != nil {

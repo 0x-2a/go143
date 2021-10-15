@@ -51,7 +51,7 @@ func (s *S3Repository) AddFileToS3(name string, reader *bytes.Reader) (string, e
 		ContentDisposition: aws.String("attachment"),
 	})
 
-	url := fmt.Sprintf("https://cos143.s3.us-east-2.amazonaws.com/uploads/%s", name)
+	url := fmt.Sprintf("https://cos143.y3sh.com/uploads/%s", name)
 
 	return url, errors.Trace(err)
 }

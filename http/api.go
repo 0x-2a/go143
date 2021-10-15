@@ -16,21 +16,23 @@ import (
 	"github.com/juju/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/y3sh/go143/instagram"
+	"github.com/y3sh/go143/nytimes"
 	"github.com/y3sh/go143/repository"
 	"github.com/y3sh/go143/twitter"
 )
 
 const (
-	SiteRoot             = "/"
-	APIRoot              = "/api"
-	TweetsURI            = "/api/v1/tweets"
-	EchoURI              = "/api/v1/form"
-	RandTweetURI         = "/api/v1/randTweet"
-	InstagramUserURI     = "/api/v1/instagram/users"
-	InstagramRandUserURI = "/api/v1/instagram/users/random"
-	InstagramSessionURI  = "/api/v1/instagram/sessions"
-	FileUploadURI        = "/api/v1/files"
-	ProjectStoreURI      = "/api/v1/projects/{groupName}/{keyName}"
+	SiteRoot              = "/"
+	APIRoot               = "/api"
+	TweetsURI             = "/api/v1/tweets"
+	EchoURI               = "/api/v1/form"
+	RandTweetURI          = "/api/v1/randTweet"
+	InstagramUserURI      = "/api/v1/instagram/users"
+	InstagramRandUserURI  = "/api/v1/instagram/users/random"
+	InstagramSessionURI   = "/api/v1/instagram/sessions"
+	NYTimesBestSellersURI = "/api/v1/nyTimes/bestSellers"
+	FileUploadURI         = "/api/v1/files"
+	ProjectStoreURI       = "/api/v1/projects/{groupName}/{keyName}"
 )
 
 var (
@@ -39,6 +41,7 @@ var (
 		"https://api.y3sh.com/api/v1/tweets",
 		"https://api.y3sh.com/api/v1/form",
 		"https://api.y3sh.com/api/v1/randTweet",
+		"https://api.y3sh.com/api/v1/nyTimes/bestSellers",
 		"https://api.y3sh.com/api/v1/instagram/user",
 		"https://api.y3sh.com/api/v1/instagram/users/random",
 		"https://api.y3sh.com/api/v1/instagram/session",
@@ -53,6 +56,7 @@ type API struct {
 	InstagramUserService InstagramUserService
 	ProjectStoreService  ProjectStoreService
 	S3Repository         S3Repository
+	NyTimesClient        NyTimesClient
 }
 
 type Router interface {
@@ -73,6 +77,10 @@ type InstagramUserService interface {
 	IsValidPassword(username instagram.Username, passwordAttempt string) bool
 }
 
+type NyTimesClient interface {
+	GetBestSellers() nytimes.BestSellerRes
+}
+
 type ProjectStoreService interface {
 	GetValue(groupName, keyName string) string
 	SetValue(groupName, keyName, value string)
@@ -88,11 +96,16 @@ type APIVersion struct {
 	URLS    []string `json:"urls"`
 }
 
-func NewAPIRouter(httpRouter Router, tweetService TweetService, instagramUserService InstagramUserService, projectStoreService ProjectStoreService, s3Repository S3Repository) *API {
+func NewAPIRouter(httpRouter Router, tweetService TweetService,
+	instagramUserService InstagramUserService,
+	nyTimesClient NyTimesClient,
+	projectStoreService ProjectStoreService,
+	s3Repository S3Repository) *API {
 	a := &API{
 		Router:               httpRouter,
 		TweetService:         tweetService,
 		InstagramUserService: instagramUserService,
+		NyTimesClient:        nyTimesClient,
 		ProjectStoreService:  projectStoreService,
 		S3Repository:         s3Repository,
 	}
@@ -148,6 +161,10 @@ func NewAPIRouter(httpRouter Router, tweetService TweetService, instagramUserSer
 
 	httpRouter.Route(InstagramSessionURI, func(r chi.Router) {
 		r.Post("/", a.PostInstagramSession)
+	})
+
+	httpRouter.Route(NYTimesBestSellersURI, func(r chi.Router) {
+		r.Get("/", a.GetNyTimesBestSellers)
 	})
 
 	httpRouter.Route(ProjectStoreURI, func(r chi.Router) {
@@ -273,6 +290,12 @@ func (a *API) GetRandTweet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	WriteJSON(w, r, randTweet)
+}
+
+func (a *API) GetNyTimesBestSellers(w http.ResponseWriter, r *http.Request) {
+	bestSellers := a.NyTimesClient.GetBestSellers()
+
+	WriteJSON(w, r, bestSellers)
 }
 
 func (a *API) GetProjectKeyValue(w http.ResponseWriter, r *http.Request) {
