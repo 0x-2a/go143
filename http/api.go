@@ -36,14 +36,14 @@ const (
 var (
 	OK         = &struct{}{}
 	apiVersion = &APIVersion{"GO143", "v1", []string{
-		"https://cos143xl.cse.taylor.edu:8080/api/v1/tweets",
-		"https://cos143xl.cse.taylor.edu:8080/api/v1/form",
-		"https://cos143xl.cse.taylor.edu:8080/api/v1/randTweet",
-		"https://cos143xl.cse.taylor.edu:8080/api/v1/instagram/user",
-		"https://cos143xl.cse.taylor.edu:8080/api/v1/instagram/users/random",
-		"https://cos143xl.cse.taylor.edu:8080/api/v1/instagram/session",
-		"https://cos143xl.cse.taylor.edu:8080/api/v1/projects/TheATeam/posts",
-		"https://cos143xl.cse.taylor.edu:8080/api/v1/files",
+		"https://api.y3sh.com/api/v1/tweets",
+		"https://api.y3sh.com/api/v1/form",
+		"https://api.y3sh.com/api/v1/randTweet",
+		"https://api.y3sh.com/api/v1/instagram/user",
+		"https://api.y3sh.com/api/v1/instagram/users/random",
+		"https://api.y3sh.com/api/v1/instagram/session",
+		"https://api.y3sh.com/api/v1/projects/TheATeam/posts",
+		"https://api.y3sh.com/api/v1/files",
 	}}
 )
 
