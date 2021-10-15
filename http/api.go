@@ -23,32 +23,31 @@ import (
 
 const (
 	SiteRoot              = "/"
-	APIRoot               = "/api"
-	TweetsURI             = "/api/v1/tweets"
-	EchoURI               = "/api/v1/form"
-	RandTweetURI          = "/api/v1/randTweet"
-	InstagramUserURI      = "/api/v1/instagram/users"
-	InstagramRandUserURI  = "/api/v1/instagram/users/random"
-	InstagramSessionURI   = "/api/v1/instagram/sessions"
-	NYTimesBestSellersURI = "/api/v1/nyTimes/bestSellers"
-	BookCoverURI          = "/api/v1/nyTimes/bookCovers/{isbn}"
-	FileUploadURI         = "/api/v1/files"
-	ProjectStoreURI       = "/api/v1/projects/{groupName}/{keyName}"
+	TweetsURI             = "/v1/tweets"
+	EchoURI               = "/v1/form"
+	RandTweetURI          = "/v1/randTweet"
+	InstagramUserURI      = "/v1/instagram/users"
+	InstagramRandUserURI  = "/v1/instagram/users/random"
+	InstagramSessionURI   = "/v1/instagram/sessions"
+	NYTimesBestSellersURI = "/v1/nyTimes/bestSellers"
+	BookCoverURI          = "/v1/nyTimes/bookCovers/{isbn}"
+	FileUploadURI         = "/v1/files"
+	ProjectStoreURI       = "/v1/projects/{groupName}/{keyName}"
 )
 
 var (
 	OK         = &struct{}{}
 	apiVersion = &APIVersion{"GO143", "v1.2", []string{
-		"https://api.y3sh.com/api/v1/tweets",
-		"https://api.y3sh.com/api/v1/form",
-		"https://api.y3sh.com/api/v1/randTweet",
-		"https://api.y3sh.com/api/v1/nyTimes/bestSellers",
-		"https://api.y3sh.com/api/v1/nyTimes/bookCovers/{isbn}",
-		"https://api.y3sh.com/api/v1/instagram/user",
-		"https://api.y3sh.com/api/v1/instagram/users/random",
-		"https://api.y3sh.com/api/v1/instagram/session",
-		"https://api.y3sh.com/api/v1/projects/TheATeam/posts",
-		"https://api.y3sh.com/api/v1/files",
+		"https://api.y3sh.com/v1/tweets",
+		"https://api.y3sh.com/v1/form",
+		"https://api.y3sh.com/v1/randTweet",
+		"https://api.y3sh.com/v1/nyTimes/bestSellers",
+		"https://api.y3sh.com/v1/nyTimes/bookCovers/{isbn}",
+		"https://api.y3sh.com/v1/instagram/user",
+		"https://api.y3sh.com/v1/instagram/users/random",
+		"https://api.y3sh.com/v1/instagram/session",
+		"https://api.y3sh.com/v1/projects/TheATeam/posts",
+		"https://api.y3sh.com/v1/files",
 	}}
 )
 
@@ -116,10 +115,6 @@ func NewAPIRouter(httpRouter Router, tweetService TweetService,
 	a.EnableCORS()
 
 	httpRouter.Route(SiteRoot, func(r chi.Router) {
-		r.Get("/", a.GetRoot)
-	})
-
-	httpRouter.Route(APIRoot, func(r chi.Router) {
 		r.Get("/", a.GetRoot)
 	})
 
