@@ -19,3 +19,9 @@ linters:
     - exhaustive
     - nestif
     - nlreturn
+    - exhaustivestruct
+    - wrapcheck
+    - errorlint
+    - cyclop
+    - forcetypeassert
+    - forbidigo
