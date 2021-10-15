@@ -29,6 +29,7 @@ func main() {
 	s3AccessKey := os.Getenv("S3_ACCESS_KEY")
 	s3SecretKey := os.Getenv("S3_SECRET_KEY")
 	nyTimesAPIKey := os.Getenv("NY_TIMES_API_KEY")
+	googleBooksAPIKey := os.Getenv("GOOGLE_BOOKS_API_KEY")
 
 	redisRepository := repository.NewRedisRepository()
 	err := redisRepository.Connect(redisPassword)
@@ -48,7 +49,7 @@ func main() {
 
 	tweetService := twitter.NewTweetService()
 	instagramUserService := instagram.NewUserService()
-	nyTimesClient := nytimes.NewRestClient(nyTimesAPIKey)
+	nyTimesClient := nytimes.NewRestClient(nyTimesAPIKey, googleBooksAPIKey)
 	projectService := projects.NewProjectStoreService(redisRepository)
 
 	chiRouter := chi.NewRouter()

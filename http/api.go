@@ -31,6 +31,7 @@ const (
 	InstagramRandUserURI  = "/api/v1/instagram/users/random"
 	InstagramSessionURI   = "/api/v1/instagram/sessions"
 	NYTimesBestSellersURI = "/api/v1/nyTimes/bestSellers"
+	BookCoverURI          = "/api/v1/nyTimes/bookCovers/{isbn}"
 	FileUploadURI         = "/api/v1/files"
 	ProjectStoreURI       = "/api/v1/projects/{groupName}/{keyName}"
 )
@@ -42,6 +43,7 @@ var (
 		"https://api.y3sh.com/api/v1/form",
 		"https://api.y3sh.com/api/v1/randTweet",
 		"https://api.y3sh.com/api/v1/nyTimes/bestSellers",
+		"https://api.y3sh.com/api/v1/nyTimes/bookCovers/{isbn}",
 		"https://api.y3sh.com/api/v1/instagram/user",
 		"https://api.y3sh.com/api/v1/instagram/users/random",
 		"https://api.y3sh.com/api/v1/instagram/session",
@@ -78,7 +80,8 @@ type InstagramUserService interface {
 }
 
 type NyTimesClient interface {
-	GetBestSellers() nytimes.BestSellerRes
+	GetSimpleBestSellers() []nytimes.SimpleBook
+	GetBookCoverURL(isbn string) nytimes.BookCoverURL
 }
 
 type ProjectStoreService interface {
@@ -165,6 +168,10 @@ func NewAPIRouter(httpRouter Router, tweetService TweetService,
 
 	httpRouter.Route(NYTimesBestSellersURI, func(r chi.Router) {
 		r.Get("/", a.GetNyTimesBestSellers)
+	})
+
+	httpRouter.Route(BookCoverURI, func(r chi.Router) {
+		r.Get("/", a.GetNyTimesBookCover)
 	})
 
 	httpRouter.Route(ProjectStoreURI, func(r chi.Router) {
@@ -293,9 +300,16 @@ func (a *API) GetRandTweet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) GetNyTimesBestSellers(w http.ResponseWriter, r *http.Request) {
-	bestSellers := a.NyTimesClient.GetBestSellers()
+	bestSellers := a.NyTimesClient.GetSimpleBestSellers()
 
 	WriteJSON(w, r, bestSellers)
+}
+
+func (a *API) GetNyTimesBookCover(w http.ResponseWriter, r *http.Request) {
+	isbn := chi.URLParam(r, "isbn")
+	coverURL := a.NyTimesClient.GetBookCoverURL(isbn)
+
+	WriteJSON(w, r, coverURL)
 }
 
 func (a *API) GetProjectKeyValue(w http.ResponseWriter, r *http.Request) {
