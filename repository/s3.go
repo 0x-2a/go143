@@ -46,6 +46,7 @@ func (s *S3Repository) AddFileToS3(name string, reader *bytes.Reader) (string, e
 		Bucket:             aws.String(S3_BUCKET),
 		Key:                aws.String(fmt.Sprintf("uploads/%s", name)),
 		ACL:                aws.String(S3_ACL),
+		CacheControl:       aws.String("private, max-age=31536000"),
 		Body:               reader,
 		ContentDisposition: aws.String("attachment"),
 	})
