@@ -152,8 +152,6 @@ func NewAPIRouter(httpRouter Router, tweetService TweetService,
 
 	httpRouter.Route(InstagramUserURI, func(r chi.Router) {
 		r.Post("/", a.PostInstagramUser)
-	})
-	httpRouter.Route(InstagramUserURI, func(r chi.Router) {
 		r.Get("/", a.GetInstagramUsers)
 	})
 
