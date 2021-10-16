@@ -134,7 +134,7 @@ func (u *UserService) AddUser(user User) error {
 }
 
 func (u *UserService) GetUsers() []User {
-	var users []User
+	users := []User{}
 
 	for k := range u.UserMap {
 		user := *u.UserMap[k]
