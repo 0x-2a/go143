@@ -26,9 +26,9 @@ const (
 	TweetsURI             = "/v1/tweets"
 	EchoURI               = "/v1/form"
 	RandTweetURI          = "/v1/randTweet"
-	InstagramUserURI      = "/v1/instagram/users"
+	InstagramUserURI      = "/v1/instagram/users/{cseHandle}"
 	InstagramRandUserURI  = "/v1/instagram/users/random"
-	InstagramSessionURI   = "/v1/instagram/sessions"
+	InstagramSessionURI   = "/v1/instagram/sessions/{cseHandle}"
 	NYTimesBestSellersURI = "/v1/nyTimes/bestSellers"
 	BookCoverURI          = "/v1/nyTimes/bookCovers/{isbn}"
 	FileUploadURI         = "/v1/files"
@@ -43,7 +43,7 @@ var (
 		"https://api.y3sh.com/v1/randTweet",
 		"https://api.y3sh.com/v1/nyTimes/bestSellers",
 		"https://api.y3sh.com/v1/nyTimes/bookCovers/{isbn}",
-		"https://api.y3sh.com/v1/instagram/user",
+		"https://api.y3sh.com/v1/instagram/users/{cseName}",
 		"https://api.y3sh.com/v1/instagram/users/random",
 		"https://api.y3sh.com/v1/instagram/session",
 		"https://api.y3sh.com/v1/projects/TheATeam/posts",
@@ -73,10 +73,10 @@ type TweetService interface {
 }
 
 type InstagramUserService interface {
-	AddUser(user instagram.User) error
-	GetUsers() []instagram.User
+	AddUser(cseName string, user instagram.User) error
+	GetUsers(string) []instagram.User
 	GetRandProfile() instagram.RandomUser
-	IsValidPassword(username instagram.Username, passwordAttempt string) bool
+	IsValidPassword(username string, passwordAttempt string, password string) bool
 }
 
 type NyTimesClient interface {
@@ -219,6 +219,12 @@ func GetPostEcho(w http.ResponseWriter, r *http.Request, method string) {
 }
 
 func (a *API) PostInstagramUser(w http.ResponseWriter, r *http.Request) {
+	cseName := chi.URLParam(r, "cseName")
+	if cseName == "" {
+		WriteBadRequest(w, r, "Missing CSE Name")
+		return
+	}
+
 	var user instagram.User
 
 	err := json.NewDecoder(r.Body).Decode(&user)
@@ -227,7 +233,7 @@ func (a *API) PostInstagramUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = a.InstagramUserService.AddUser(user)
+	err = a.InstagramUserService.AddUser(cseName, user)
 	if err != nil {
 		WriteBadRequest(w, r, fmt.Sprintf("Error: %s.", err.Error()))
 		return
@@ -237,11 +243,23 @@ func (a *API) PostInstagramUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) GetInstagramUsers(w http.ResponseWriter, r *http.Request) {
-	users := a.InstagramUserService.GetUsers()
+	cseName := chi.URLParam(r, "cseName")
+	if cseName == "" {
+		WriteBadRequest(w, r, "Missing CSE Name")
+		return
+	}
+
+	users := a.InstagramUserService.GetUsers(cseName)
 	WriteJSON(w, r, users)
 }
 
 func (a *API) PostInstagramSession(w http.ResponseWriter, r *http.Request) {
+	cseName := chi.URLParam(r, "cseName")
+	if cseName == "" {
+		WriteBadRequest(w, r, "Missing CSE Name")
+		return
+	}
+
 	var user instagram.User
 
 	err := json.NewDecoder(r.Body).Decode(&user)
@@ -250,7 +268,7 @@ func (a *API) PostInstagramSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	validPassword := a.InstagramUserService.IsValidPassword(user.Username, user.Password)
+	validPassword := a.InstagramUserService.IsValidPassword(cseName, user.Username, user.Password)
 	if !validPassword {
 		WriteBadRequest(w, r, "Invalid username and/or password.")
 		return

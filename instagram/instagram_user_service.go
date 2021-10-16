@@ -12,7 +12,7 @@ import (
 type User struct {
 	MobileEmail string   `json:"mobileEmail"`
 	FullName    string   `json:"fullName"`
-	Username    Username `json:"username"`
+	Username    string `json:"username"`
 	Password    string   `json:"password"`
 }
 
@@ -23,11 +23,14 @@ type RandomUser struct {
 	FeedImages []string `json:"feedImages"`
 }
 
-type Username string
+type UserKey struct {
+	cseName string
+	userName string
+}
 
 type UserService struct {
 	userMutex *sync.Mutex
-	UserMap   map[Username]*User
+	UserMap   map[UserKey]*User
 }
 
 var (
@@ -94,7 +97,7 @@ var (
 
 func NewUserService() *UserService {
 	return &UserService{
-		UserMap:   make(map[Username]*User),
+		UserMap:   make(map[UserKey]*User),
 		userMutex: &sync.Mutex{},
 	}
 }
@@ -111,9 +114,9 @@ func (u *UserService) GetTweets() []*User {
 	return users
 }
 
-func (u *UserService) AddUser(user User) error {
+func (u *UserService) AddUser(cseName string, user User) error {
 	if strings.TrimSpace(user.MobileEmail) == "" ||
-		strings.TrimSpace(string(user.Username)) == "" ||
+		strings.TrimSpace(user.Username) == "" ||
 		strings.TrimSpace(user.Password) == "" {
 		return errors.New("missing required user fields")
 	}
@@ -124,35 +127,44 @@ func (u *UserService) AddUser(user User) error {
 	u.userMutex.Lock()
 	defer u.userMutex.Unlock()
 
-	if _, ok := u.UserMap[user.Username]; ok {
+	key := UserKey{
+		cseName:  cseName,
+		userName: user.Username,
+	}
+
+	if _, ok := u.UserMap[key]; ok {
 		return errors.New("user already exists")
 	}
 
-	u.UserMap[user.Username] = &user
+	u.UserMap[key] = &user
 
 	return nil
 }
 
-func (u *UserService) GetUsers() []User {
+func (u *UserService) GetUsers(cseName string) []User {
 	users := []User{}
 
 	for k := range u.UserMap {
-		user := *u.UserMap[k]
-
-		users = append(users, user)
+		if k.cseName == cseName{
+			users = append(users, *u.UserMap[k])
+		}
 	}
 
 	return users
 }
 
-func (u *UserService) IsValidPassword(username Username, passwordAttempt string) bool {
+func (u *UserService) IsValidPassword(cseName, username, passwordAttempt string) bool {
 	lowSecurityHash := md5.Sum([]byte(passwordAttempt))
 	passwordAttemptHash := hex.EncodeToString(lowSecurityHash[:])
 
 	u.userMutex.Lock()
 	defer u.userMutex.Unlock()
 
-	if user, ok := u.UserMap[username]; ok {
+	key := UserKey{
+		cseName:  cseName,
+		userName: username,
+	}
+	if user, ok := u.UserMap[key]; ok {
 		return user.Password == passwordAttemptHash
 	}
 
