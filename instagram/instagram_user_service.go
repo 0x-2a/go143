@@ -133,6 +133,18 @@ func (u *UserService) AddUser(user User) error {
 	return nil
 }
 
+func (u *UserService) GetUsers() []User {
+	var users []User
+
+	for k := range u.UserMap {
+		user := *u.UserMap[k]
+
+		users = append(users, user)
+	}
+
+	return users
+}
+
 func (u *UserService) IsValidPassword(username Username, passwordAttempt string) bool {
 	lowSecurityHash := md5.Sum([]byte(passwordAttempt))
 	passwordAttemptHash := hex.EncodeToString(lowSecurityHash[:])

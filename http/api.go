@@ -74,6 +74,7 @@ type TweetService interface {
 
 type InstagramUserService interface {
 	AddUser(user instagram.User) error
+	GetUsers() []instagram.User
 	GetRandProfile() instagram.RandomUser
 	IsValidPassword(username instagram.Username, passwordAttempt string) bool
 }
@@ -151,6 +152,9 @@ func NewAPIRouter(httpRouter Router, tweetService TweetService,
 
 	httpRouter.Route(InstagramUserURI, func(r chi.Router) {
 		r.Post("/", a.PostInstagramUser)
+	})
+	httpRouter.Route(InstagramUserURI, func(r chi.Router) {
+		r.Get("/", a.GetInstagramUsers)
 	})
 
 	httpRouter.Route(InstagramRandUserURI, func(r chi.Router) {
@@ -232,6 +236,11 @@ func (a *API) PostInstagramUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	WriteJSON(w, r, OK)
+}
+
+func (a *API) GetInstagramUsers(w http.ResponseWriter, r *http.Request) {
+	users := a.InstagramUserService.GetUsers()
+	WriteJSON(w, r, users)
 }
 
 func (a *API) PostInstagramSession(w http.ResponseWriter, r *http.Request) {
