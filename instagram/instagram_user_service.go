@@ -1,8 +1,6 @@
 package instagram
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"errors"
 	"math/rand"
 	"strings"
@@ -121,9 +119,6 @@ func (u *UserService) AddUser(cseName string, user User) error {
 		return errors.New("missing required user fields")
 	}
 
-	lowSecurityHash := md5.Sum([]byte(user.Password))
-	user.Password = hex.EncodeToString(lowSecurityHash[:])
-
 	u.userMutex.Lock()
 	defer u.userMutex.Unlock()
 
@@ -154,9 +149,6 @@ func (u *UserService) GetUsers(cseName string) []User {
 }
 
 func (u *UserService) IsValidPassword(cseName, username, passwordAttempt string) bool {
-	lowSecurityHash := md5.Sum([]byte(passwordAttempt))
-	passwordAttemptHash := hex.EncodeToString(lowSecurityHash[:])
-
 	u.userMutex.Lock()
 	defer u.userMutex.Unlock()
 
@@ -165,7 +157,7 @@ func (u *UserService) IsValidPassword(cseName, username, passwordAttempt string)
 		userName: username,
 	}
 	if user, ok := u.UserMap[key]; ok {
-		return user.Password == passwordAttemptHash
+		return user.Password == passwordAttempt
 	}
 
 	return false
