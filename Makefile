@@ -9,7 +9,7 @@ BUILD_OUT_DIR=bin
 PROJECT_DIR=./
 BIN_NAME=go143
 build:
-	$(GOBUILD) -v -o $(BUILD_OUT_DIR)/$(BIN_NAME) $(PROJECT_DIR)
+	$(GOBUILD) -mod=vendor -v -o $(BUILD_OUT_DIR)/$(BIN_NAME) $(PROJECT_DIR)
 
 test:
 	$(GOTEST) -v ./...
@@ -22,5 +22,5 @@ clean:
 	rm -rf $(BUILD_OUT_DIR)/$(BIN_NAME)
 
 build-linux:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -ldflags="-w -s" -v -o $(BUILD_OUT_DIR)/$(BIN_NAME)-linux $(PROJECT_DIR)
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -mod=vendor -ldflags="-w -s" -v -o $(BUILD_OUT_DIR)/$(BIN_NAME)-linux $(PROJECT_DIR)
 

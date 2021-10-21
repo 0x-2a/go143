@@ -13,3 +13,5 @@
 deployProd.sh
 
 bin/
+
+infra
