@@ -86,24 +86,25 @@ type GoogleBookRes struct {
 	} `json:"items"`
 }
 
-var (
-	httpClient = http.Client{
-		Timeout: time.Second * 2, // Timeout after 2 seconds
-	}
-)
+type HTTPClient interface {
+	Get(url string) (resp *http.Response, err error)
+	Do(req *http.Request) (resp *http.Response, err error)
+}
 
 type RestClient struct {
 	bestSellerAPIKey string
 	googleBookAPIKey string
 	lastBestSellers  BestSellerRes
 	isbnCoverURLMap  sync.Map // not thread safe
+	httpClient       HTTPClient
 }
 
-func NewRestClient(bestSellerAPIKey, googleBookAPIKey string) *RestClient {
+func NewRestClient(bestSellerAPIKey, googleBookAPIKey string, httpClient HTTPClient) *RestClient {
 	return &RestClient{
 		bestSellerAPIKey: bestSellerAPIKey,
 		googleBookAPIKey: googleBookAPIKey,
 		isbnCoverURLMap:  sync.Map{},
+		httpClient:       httpClient,
 	}
 }
 
@@ -119,6 +120,10 @@ func (r *RestClient) GetSimpleBestSellers() []SimpleBook {
 			isbn := "000"
 			if len(bookObj.Isbns) > 0 {
 				isbn = bookObj.Isbns[0].Isbn10
+			}
+
+			if isbn == "000" || isbn == "" && len(bookObj.BookDetails) > 0 {
+				isbn = bookObj.BookDetails[0].PrimaryIsbn10
 			}
 
 			week := bookObj.RankLastWeek
@@ -158,7 +163,7 @@ func (r *RestClient) GetBookCoverURL(isbn string) BookCoverURL {
 		return defaultURL
 	}
 
-	res, err := httpClient.Do(req)
+	res, err := r.httpClient.Do(req)
 	if err != nil {
 		log.Errorf("Could not fetch googleBookRes, %s", err.Error())
 		return defaultURL
@@ -211,7 +216,7 @@ func (r *RestClient) getBestSellers() BestSellerRes {
 		return r.lastBestSellers
 	}
 
-	res, err := httpClient.Do(req)
+	res, err := r.httpClient.Do(req)
 	if err != nil {
 		log.Errorf("Could not fetch best sellers, %s", err.Error())
 		return r.lastBestSellers

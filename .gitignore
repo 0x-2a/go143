@@ -15,3 +15,5 @@ deployProd.sh
 bin/
 
 infra
+
+appendonly.aof

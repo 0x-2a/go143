@@ -33,6 +33,7 @@ const (
 	BookCoverURI          = "/v1/nyTimes/bookCovers/{isbn}"
 	FileUploadURI         = "/v1/files"
 	ProjectStoreURI       = "/v1/projects/{groupName}/{keyName}"
+	PolygonURI            = "/v1/polygon"
 )
 
 var (
@@ -47,6 +48,7 @@ var (
 		"https://api.y3sh.com/v1/instagram/users/random",
 		"https://api.y3sh.com/v1/instagram/session",
 		"https://api.y3sh.com/v1/projects/TheATeam/posts",
+		"https://api.y3sh.com/v1/polygon/{path}",
 		"https://api.y3sh.com/v1/files",
 	}}
 )
@@ -58,6 +60,7 @@ type API struct {
 	ProjectStoreService  ProjectStoreService
 	S3Repository         S3Repository
 	NyTimesClient        NyTimesClient
+	PolygonClient        PolygonClient
 }
 
 type Router interface {
@@ -84,6 +87,10 @@ type NyTimesClient interface {
 	GetBookCoverURL(isbn string) nytimes.BookCoverURL
 }
 
+type PolygonClient interface {
+	GetPolygonPath(path string) []byte
+}
+
 type ProjectStoreService interface {
 	GetValue(groupName, keyName string) string
 	SetValue(groupName, keyName, value string)
@@ -102,6 +109,7 @@ type APIVersion struct {
 func NewAPIRouter(httpRouter Router, tweetService TweetService,
 	instagramUserService InstagramUserService,
 	nyTimesClient NyTimesClient,
+	polygonClient PolygonClient,
 	projectStoreService ProjectStoreService,
 	s3Repository S3Repository) *API {
 	a := &API{
@@ -109,6 +117,7 @@ func NewAPIRouter(httpRouter Router, tweetService TweetService,
 		TweetService:         tweetService,
 		InstagramUserService: instagramUserService,
 		NyTimesClient:        nyTimesClient,
+		PolygonClient:        polygonClient,
 		ProjectStoreService:  projectStoreService,
 		S3Repository:         s3Repository,
 	}
@@ -169,6 +178,10 @@ func NewAPIRouter(httpRouter Router, tweetService TweetService,
 
 	httpRouter.Route(BookCoverURI, func(r chi.Router) {
 		r.Get("/", a.GetNyTimesBookCover)
+	})
+
+	httpRouter.Route(PolygonURI, func(r chi.Router) {
+		r.Get("/*", a.GetPolygon)
 	})
 
 	httpRouter.Route(ProjectStoreURI, func(r chi.Router) {
@@ -330,6 +343,17 @@ func (a *API) GetNyTimesBookCover(w http.ResponseWriter, r *http.Request) {
 	coverURL := a.NyTimesClient.GetBookCoverURL(isbn)
 
 	WriteJSON(w, r, coverURL)
+}
+
+func (a *API) GetPolygon(w http.ResponseWriter, r *http.Request) {
+	polygonPath := strings.Replace(r.RequestURI, "/v1/polygon/", "", 1)
+
+	polyBytes := a.PolygonClient.GetPolygonPath(polygonPath)
+	if len(polyBytes) > 0 {
+		WriteResponse(w, r, polyBytes)
+	} else {
+		WriteError(w, r, "Poly error", 400)
+	}
 }
 
 func (a *API) GetProjectKeyValue(w http.ResponseWriter, r *http.Request) {

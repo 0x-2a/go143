@@ -1,35 +1,59 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
+	"fmt"
+	"net"
+	"net/http"
 	"os"
+	"runtime"
+	"strings"
+	"time"
 
 	"github.com/go-chi/chi"
+	"github.com/juju/errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/y3sh/go143/http"
+	go143http "github.com/y3sh/go143/http"
 	"github.com/y3sh/go143/instagram"
 	"github.com/y3sh/go143/nytimes"
+	"github.com/y3sh/go143/polygon"
 	"github.com/y3sh/go143/projects"
 	"github.com/y3sh/go143/repository"
 	"github.com/y3sh/go143/twitter"
 )
 
-var (
-	serverPort  = flag.String("port", getEnv("PORT", "3000"), "Rest API Port, e.g. 3000")
-	logLevelStr = flag.String("logLevel", getEnv("LOG_LEVEL", "debug"),
-		"Log level: trace, debug, info, warn, error, fatal, panic")
+const (
+	dialTimeout       = 5 * time.Second
+	handshakeTimeout  = 5 * time.Second
+	responseTimeout   = time.Second * 10
+	DebugTSFormat     = "2006-01-02 03:04:05PM MST"
+	longestFileLength = 28
 )
 
 func main() {
 	flag.Parse()
 
-	setupLogger(logLevelStr)
+	logLevel := os.Getenv("LOG_LEVEL")
+	SetupLogger(logLevel)
 
 	redisPassword := os.Getenv("REDIS_PASSWORD")
 	s3AccessKey := os.Getenv("S3_ACCESS_KEY")
 	s3SecretKey := os.Getenv("S3_SECRET_KEY")
 	nyTimesAPIKey := os.Getenv("NY_TIMES_API_KEY")
+	polygonAPIKey := os.Getenv("POLYGON_API_KEY")
 	googleBooksAPIKey := os.Getenv("GOOGLE_BOOKS_API_KEY")
+
+	serverHost := os.Getenv("HOST")
+	if serverHost == "" {
+		serverHost = "localhost"
+	}
+
+	serverPort := os.Getenv("PORT")
+	if serverPort == "" {
+		serverPort = "8080"
+	}
+	hostAddress := fmt.Sprintf("%s:%s", serverHost, serverPort)
 
 	redisRepository := repository.NewRedisRepository()
 	err := redisRepository.Connect(redisPassword)
@@ -49,24 +73,19 @@ func main() {
 
 	tweetService := twitter.NewTweetService()
 	instagramUserService := instagram.NewUserService()
-	nyTimesClient := nytimes.NewRestClient(nyTimesAPIKey, googleBooksAPIKey)
+	nyTimesClient := nytimes.NewRestClient(nyTimesAPIKey, googleBooksAPIKey, GetHTTPClient())
+	polygonClient := polygon.NewRestClient(polygonAPIKey, GetHTTPClient())
 	projectService := projects.NewProjectStoreService(redisRepository)
 
 	chiRouter := chi.NewRouter()
 
-	http.NewAPIRouter(chiRouter, tweetService, instagramUserService,
-		nyTimesClient, projectService, s3Repository)
+	go143http.NewAPIRouter(chiRouter, tweetService, instagramUserService,
+		nyTimesClient, polygonClient, projectService, s3Repository)
 
-	restAPIServer, err := http.NewServer(http.Port(*serverPort))
+	log.Infof("REST API starting on %s . . .", hostAddress)
+	err = http.ListenAndServe(hostAddress, chiRouter)
 	if err != nil {
-		log.Fatalf("Failed to create api server. \n%+v\n", err)
-	}
-
-	log.Info("143 API starting . . .")
-
-	err = restAPIServer.Start()
-	if err != nil {
-		log.Infof("Server shutdown.  \n%+v\n", err)
+		log.Fatalf("HTTP Server Exited:  \n%s", errors.ErrorStack(err))
 	}
 }
 
@@ -78,22 +97,61 @@ func getEnv(key, fallback string) string {
 	return fallback
 }
 
-func setupLogger(logLevelStr *string) {
-	logLevel, err := log.ParseLevel(*logLevelStr)
+func SetupLogger(logLevelStr string) {
+	if logLevelStr == "" {
+		logLevelStr = "trace"
+	}
+
+	logLevel, err := log.ParseLevel(logLevelStr)
 	if err != nil {
 		logLevel = log.TraceLevel
-		log.Warn("Log level invalid or not provided, using trace level.")
 	}
 
 	log.SetFormatter(&log.TextFormatter{
-		DisableColors: false,
-		FullTimestamp: true,
-		ForceColors:   true,
+		DisableColors:          false,
+		FullTimestamp:          true,
+		ForceColors:            true,
+		TimestampFormat:        DebugTSFormat,
+		PadLevelText:           true,
+		DisableLevelTruncation: true,
+		DisableSorting:         true,
+		CallerPrettyfier: func(frame *runtime.Frame) (string, string) {
+			fileStr := frame.File
+
+			idx := strings.LastIndex(fileStr, "/")
+			if idx > -1 {
+				fileStr = fileStr[idx+1:]
+			}
+
+			fileLine := fmt.Sprintf(" %s:%d", fileStr, frame.Line)
+
+			for len(fileLine) < longestFileLength {
+				fileLine += " "
+			}
+
+			return "", fileLine
+		},
 	})
 
-	// Log filename and line number
 	log.SetReportCaller(true)
-
 	log.SetOutput(os.Stdout)
 	log.SetLevel(logLevel)
+
+	log.Infof("Logger started with %s level.", log.GetLevel())
+}
+
+func GetHTTPClient() *http.Client {
+	httpTransport := &http.Transport{
+		Dial: (&net.Dialer{
+			Timeout: dialTimeout,
+		}).Dial,
+		TLSHandshakeTimeout: handshakeTimeout,
+		TLSClientConfig:     &tls.Config{InsecureSkipVerify: true},
+	}
+	httpClient := &http.Client{
+		Timeout:   responseTimeout,
+		Transport: httpTransport,
+	}
+
+	return httpClient
 }

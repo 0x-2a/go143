@@ -1,0 +1,1 @@
+redis-server --appendonly yes  --requirepass "AWWxdpdeprBdppVfJmnKY"
