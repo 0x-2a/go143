@@ -39,17 +39,17 @@ const (
 var (
 	OK         = &struct{}{}
 	apiVersion = &APIVersion{"GO143", "v1.2", []string{
-		"https://api.y3sh.com/v1/tweets",
-		"https://api.y3sh.com/v1/form",
-		"https://api.y3sh.com/v1/randTweet",
-		"https://api.y3sh.com/v1/nyTimes/bestSellers",
-		"https://api.y3sh.com/v1/nyTimes/bookCovers/{isbn}",
-		"https://api.y3sh.com/v1/instagram/users/{cseName}",
-		"https://api.y3sh.com/v1/instagram/users/random",
-		"https://api.y3sh.com/v1/instagram/session",
-		"https://api.y3sh.com/v1/projects/TheATeam/posts",
-		"https://api.y3sh.com/v1/polygon/{path}",
-		"https://api.y3sh.com/v1/files",
+		"https://go143.y3sh.com/v1/tweets",
+		"https://go143.y3sh.com/v1/form",
+		"https://go143.y3sh.com/v1/randTweet",
+		"https://go143.y3sh.com/v1/nyTimes/bestSellers",
+		"https://go143.y3sh.com/v1/nyTimes/bookCovers/{isbn}",
+		"https://go143.y3sh.com/v1/instagram/users/{cseName}",
+		"https://go143.y3sh.com/v1/instagram/users/random",
+		"https://go143.y3sh.com/v1/instagram/session",
+		"https://go143.y3sh.com/v1/projects/TheATeam/posts",
+		"https://go143.y3sh.com/v1/polygon/{path}",
+		"https://go143.y3sh.com/v1/files",
 	}}
 )
 
@@ -396,7 +396,7 @@ func (a *API) SetProjectKeyValue(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) PostFileUpload(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseMultipartForm(256 * 1000) // bytes
+	err := r.ParseMultipartForm(50 * 1000 * 1000) // 50 mb
 
 	var buf bytes.Buffer
 	file, header, err := r.FormFile("file")
