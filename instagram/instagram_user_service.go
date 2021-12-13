@@ -8,21 +8,22 @@ import (
 )
 
 type User struct {
-	MobileEmail string   `json:"mobileEmail"`
-	FullName    string   `json:"fullName"`
+	MobileEmail string `json:"mobileEmail"`
+	FullName    string `json:"fullName"`
 	Username    string `json:"username"`
-	Password    string   `json:"password"`
+	Password    string `json:"password"`
 }
 
 type RandomUser struct {
 	Name       string   `json:"name"`
 	Location   string   `json:"location"`
+	Gender     string   `json:"gender"`
 	Picture    string   `json:"picture"`
 	FeedImages []string `json:"feedImages"`
 }
 
 type UserKey struct {
-	cseName string
+	cseName  string
 	userName string
 }
 
@@ -32,41 +33,51 @@ type UserService struct {
 }
 
 var (
-	randUsers = []RandomUser{
-		{
-			Name:     "Miss Addison Young",
-			Location: "6682 Brock Rd, Fountainbleu, Nunavut, Canada, S8P 4T7",
-			Picture:  "https://cos143.y3sh.com/user1.jpg",
-		},
-		{
-			Name:     "Miss Alice Spencer",
-			Location: "922 Frostfield Dr, New York, NY, USA",
-			Picture:  "https://cos143.y3sh.com/user2.jpg",
-		},
-		{
-			Name:     "Miss Vallery Kirkbride",
-			Location: "8472 Connifer Ridge Rd, Mountain View, CA",
-			Picture:  "https://cos143.y3sh.com/user3.jpg",
-		},
+	randMaleUsers = []RandomUser{
 		{
 			Name:     "Mr Jordan Montoya",
 			Location: "369 Roam Terrace, Atlanta, GA, USA",
 			Picture:  "https://cos143.y3sh.com/user4.jpg",
+			Gender:   "male",
 		},
 		{
 			Name:     "Mr Lucas Bryant",
 			Location: "6395 Wheathill Pass, Boulder, CO, USA",
 			Picture:  "https://cos143.y3sh.com/user5.jpg",
+			Gender:   "male",
 		},
 		{
 			Name:     "Mr Frank Anderson",
 			Location: "455 Benton Blvd, San Francisco, CA, USA",
 			Picture:  "https://cos143.y3sh.com/user6.jpg",
+			Gender:   "male",
 		},
 		{
 			Name:     "Mr Bernard Abernathy",
 			Location: "221B Easy St, Mountain View, CA, USA",
 			Picture:  "https://cos143.y3sh.com/user7.jpg",
+			Gender:   "male",
+		},
+	}
+
+	randFemaleUsers = []RandomUser{
+		{
+			Name:     "Miss Addison Young",
+			Location: "6682 Brock Rd, Fountainbleu, Nunavut, Canada, S8P 4T7",
+			Picture:  "https://cos143.y3sh.com/user1.jpg",
+			Gender:   "female",
+		},
+		{
+			Name:     "Miss Alice Spencer",
+			Location: "922 Frostfield Dr, New York, NY, USA",
+			Picture:  "https://cos143.y3sh.com/user2.jpg",
+			Gender:   "female",
+		},
+		{
+			Name:     "Miss Vallery Kirkbride",
+			Location: "8472 Connifer Ridge Rd, Mountain View, CA",
+			Picture:  "https://cos143.y3sh.com/user3.jpg",
+			Gender:   "female",
 		},
 	}
 
@@ -140,7 +151,7 @@ func (u *UserService) GetUsers(cseName string) []User {
 	users := []User{}
 
 	for k := range u.UserMap {
-		if k.cseName == cseName{
+		if k.cseName == cseName {
 			users = append(users, *u.UserMap[k])
 		}
 	}
@@ -164,7 +175,28 @@ func (u *UserService) IsValidPassword(cseName, username, passwordAttempt string)
 }
 
 func (u *UserService) GetRandProfile() RandomUser {
+	randUsers := append(randMaleUsers, randFemaleUsers...)
+
 	user := randUsers[rand.Intn(len(randUsers))]
+
+	p := rand.Perm(9)
+
+	for _, r := range p {
+		user.FeedImages = append(user.FeedImages, feedImages[r])
+	}
+
+	return user
+}
+
+func (u *UserService) GetRandProfileByGender(gender string) RandomUser {
+	var user RandomUser
+	if gender == "male" {
+		user = randMaleUsers[rand.Intn(len(randMaleUsers))]
+	} else if gender == "female" {
+		user = randFemaleUsers[rand.Intn(len(randFemaleUsers))]
+	} else {
+		return u.GetRandProfile()
+	}
 
 	p := rand.Perm(9)
 

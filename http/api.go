@@ -22,18 +22,19 @@ import (
 )
 
 const (
-	SiteRoot              = "/"
-	TweetsURI             = "/v1/tweets"
-	EchoURI               = "/v1/form"
-	RandTweetURI          = "/v1/randTweet"
-	InstagramUserURI      = "/v1/instagram/users/{cseName}"
-	InstagramRandUserURI  = "/v1/instagram/users/random"
-	InstagramSessionURI   = "/v1/instagram/sessions/{cseName}"
-	NYTimesBestSellersURI = "/v1/nyTimes/bestSellers"
-	BookCoverURI          = "/v1/nyTimes/bookCovers/{isbn}"
-	FileUploadURI         = "/v1/files"
-	ProjectStoreURI       = "/v1/projects/{groupName}/{keyName}"
-	PolygonURI            = "/v1/polygon"
+	SiteRoot                   = "/"
+	TweetsURI                  = "/v1/tweets"
+	EchoURI                    = "/v1/form"
+	RandTweetURI               = "/v1/randTweet"
+	InstagramUserURI           = "/v1/instagram/users/{cseName}"
+	InstagramRandUserURI       = "/v1/instagram/users/random"
+	InstagramRandUserGenderURI = "/v1/instagram/users/random/{gender}"
+	InstagramSessionURI        = "/v1/instagram/sessions/{cseName}"
+	NYTimesBestSellersURI      = "/v1/nyTimes/bestSellers"
+	BookCoverURI               = "/v1/nyTimes/bookCovers/{isbn}"
+	FileUploadURI              = "/v1/files"
+	ProjectStoreURI            = "/v1/projects/{groupName}/{keyName}"
+	PolygonURI                 = "/v1/polygon"
 )
 
 var (
@@ -46,6 +47,7 @@ var (
 		"https://go143.y3sh.com/v1/nyTimes/bookCovers/{isbn}",
 		"https://go143.y3sh.com/v1/instagram/users/{cseName}",
 		"https://go143.y3sh.com/v1/instagram/users/random",
+		"https://go143.y3sh.com/v1/instagram/users/random/{gender}",
 		"https://go143.y3sh.com/v1/instagram/session",
 		"https://go143.y3sh.com/v1/projects/TheATeam/posts",
 		"https://go143.y3sh.com/v1/polygon/{path}",
@@ -79,6 +81,7 @@ type InstagramUserService interface {
 	AddUser(cseName string, user instagram.User) error
 	GetUsers(string) []instagram.User
 	GetRandProfile() instagram.RandomUser
+	GetRandProfileByGender(gender string) instagram.RandomUser
 	IsValidPassword(username string, passwordAttempt string, password string) bool
 }
 
@@ -166,6 +169,10 @@ func NewAPIRouter(httpRouter Router, tweetService TweetService,
 
 	httpRouter.Route(InstagramRandUserURI, func(r chi.Router) {
 		r.Get("/", a.GetRandInstagramUser)
+	})
+
+	httpRouter.Route(InstagramRandUserGenderURI, func(r chi.Router) {
+		r.Get("/", a.GetRandInstagramUserByGender)
 	})
 
 	httpRouter.Route(InstagramSessionURI, func(r chi.Router) {
@@ -447,4 +454,10 @@ func (a *API) EnableCORS() {
 
 func (a *API) GetRandInstagramUser(w http.ResponseWriter, r *http.Request) {
 	WriteJSON(w, r, a.InstagramUserService.GetRandProfile())
+}
+
+func (a *API) GetRandInstagramUserByGender(w http.ResponseWriter, r *http.Request) {
+	gender := chi.URLParam(r, "gender")
+
+	WriteJSON(w, r, a.InstagramUserService.GetRandProfileByGender(gender))
 }
