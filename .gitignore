@@ -17,3 +17,5 @@ bin/
 infra
 
 appendonly.aof
+
+dump.rdb

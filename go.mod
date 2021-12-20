@@ -3,7 +3,7 @@ module github.com/y3sh/go143
 go 1.17
 
 require (
-	github.com/aws/aws-sdk-go v1.41.4
+	github.com/aws/aws-sdk-go v1.42.23
 	github.com/go-chi/chi v1.5.4
 	github.com/go-chi/cors v1.2.0
 	github.com/go-redis/redis/v8 v8.11.4

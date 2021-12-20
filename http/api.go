@@ -35,6 +35,7 @@ const (
 	FileUploadURI              = "/v1/files"
 	ProjectStoreURI            = "/v1/projects/{groupName}/{keyName}"
 	PolygonURI                 = "/v1/polygon"
+	GetProxyURI                = "/v1/getProxy/{url}"
 )
 
 var (
@@ -52,6 +53,7 @@ var (
 		"https://go143.y3sh.com/v1/projects/TheATeam/posts",
 		"https://go143.y3sh.com/v1/polygon/{path}",
 		"https://go143.y3sh.com/v1/files",
+		"https://go143.y3sh.com/v1/getProxy/{encodeURL}",
 	}}
 )
 
@@ -63,6 +65,7 @@ type API struct {
 	S3Repository         S3Repository
 	NyTimesClient        NyTimesClient
 	PolygonClient        PolygonClient
+	ProxyURLClient       ProxyURLClient
 }
 
 type Router interface {
@@ -94,6 +97,10 @@ type PolygonClient interface {
 	GetPolygonPath(path string) []byte
 }
 
+type ProxyURLClient interface {
+	GetProxyURL(url string) []byte
+}
+
 type ProjectStoreService interface {
 	GetValue(groupName, keyName string) string
 	SetValue(groupName, keyName, value string)
@@ -113,6 +120,7 @@ func NewAPIRouter(httpRouter Router, tweetService TweetService,
 	instagramUserService InstagramUserService,
 	nyTimesClient NyTimesClient,
 	polygonClient PolygonClient,
+	proxyURLClient ProxyURLClient,
 	projectStoreService ProjectStoreService,
 	s3Repository S3Repository) *API {
 	a := &API{
@@ -121,6 +129,7 @@ func NewAPIRouter(httpRouter Router, tweetService TweetService,
 		InstagramUserService: instagramUserService,
 		NyTimesClient:        nyTimesClient,
 		PolygonClient:        polygonClient,
+		ProxyURLClient:       proxyURLClient,
 		ProjectStoreService:  projectStoreService,
 		S3Repository:         s3Repository,
 	}
@@ -189,6 +198,10 @@ func NewAPIRouter(httpRouter Router, tweetService TweetService,
 
 	httpRouter.Route(PolygonURI, func(r chi.Router) {
 		r.Get("/*", a.GetPolygon)
+	})
+
+	httpRouter.Route(GetProxyURI, func(r chi.Router) {
+		r.Get("/*", a.GetProxyURL)
 	})
 
 	httpRouter.Route(ProjectStoreURI, func(r chi.Router) {
@@ -360,6 +373,21 @@ func (a *API) GetPolygon(w http.ResponseWriter, r *http.Request) {
 		WriteResponse(w, r, polyBytes)
 	} else {
 		WriteError(w, r, "Poly error", 400)
+	}
+}
+
+func (a *API) GetProxyURL(w http.ResponseWriter, r *http.Request) {
+	proxyURL, err := url.QueryUnescape(chi.URLParam(r, "url"))
+	if err != nil {
+		WriteError(w, r, "Bad URL", 400)
+		return
+	}
+
+	polyBytes := a.ProxyURLClient.GetProxyURL(proxyURL)
+	if len(polyBytes) > 0 {
+		WriteResponse(w, r, polyBytes)
+	} else {
+		WriteError(w, r, "Proxy error", 400)
 	}
 }
 

@@ -19,6 +19,7 @@ import (
 	"github.com/y3sh/go143/nytimes"
 	"github.com/y3sh/go143/polygon"
 	"github.com/y3sh/go143/projects"
+	"github.com/y3sh/go143/proxyURL"
 	"github.com/y3sh/go143/repository"
 	"github.com/y3sh/go143/twitter"
 )
@@ -75,12 +76,13 @@ func main() {
 	instagramUserService := instagram.NewUserService()
 	nyTimesClient := nytimes.NewRestClient(nyTimesAPIKey, googleBooksAPIKey, GetHTTPClient())
 	polygonClient := polygon.NewRestClient(polygonAPIKey, GetHTTPClient())
+	proxyClient := proxyURL.NewProxyClient(GetHTTPClient())
 	projectService := projects.NewProjectStoreService(redisRepository)
 
 	chiRouter := chi.NewRouter()
 
 	go143http.NewAPIRouter(chiRouter, tweetService, instagramUserService,
-		nyTimesClient, polygonClient, projectService, s3Repository)
+		nyTimesClient, polygonClient, proxyClient, projectService, s3Repository)
 
 	log.Infof("REST API starting on %s . . .", hostAddress)
 	err = http.ListenAndServe(hostAddress, chiRouter)
